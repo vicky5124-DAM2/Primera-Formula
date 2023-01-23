@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Race implements Runnable {
+    public static final int BASE_LAP_TIME = 50;
     boolean is_running = true;
     List<Team> teams;
 
@@ -14,18 +15,26 @@ public class Race implements Runnable {
     }
 
     private void lap(Team team, Pilot pilot) {
-        pilot.laps -= 1;
-
         try {
-            int random = 1 + (int)(Math.random() * 50);
-            pilot.time += 50 + random;
-
-            Thread.sleep(50 + random);
+            if (pilot.fuel < 5) {
+                if (!team.box.hasPilot()) {
+                    Main.log.warning(String.format("Team: %s | Pilot: %s | Laps left: %d | Fuel left = %d | [ENTERING BOXES]\n", team.name, pilot.name, pilot.laps, pilot.fuel));
+                    team.box.setPilot(pilot);
+                    pilot.refuel();
+                    team.box.clearPilot();
+                    Main.log.warning(String.format("Team: %s | Pilot: %s | Laps left: %d | Fuel left = %d | [EXITING BOXES]\n", team.name, pilot.name, pilot.laps, pilot.fuel));
+                } else {
+                    Main.log.severe(String.format("Team: %s | Pilot: %s | Laps left: %d | Fuel left = %d | [COULD NOT ENTER BOXES]\n", team.name, pilot.name, pilot.laps, pilot.fuel));
+                    pilot.lap();
+                }
+            } else {
+                pilot.lap();
+            }
         } catch (InterruptedException e) {
             return;
         }
 
-        System.out.printf("Team: %s | Pilot: %s | Laps left: %d\n", team.name, pilot.name, pilot.laps);
+        Main.log.info(String.format("Team: %s | Pilot: %s | Laps left: %d | Fuel left = %d\n", team.name, pilot.name, pilot.laps, pilot.fuel));
 
         if (pilot.laps == 0) {
             synchronized (this) {

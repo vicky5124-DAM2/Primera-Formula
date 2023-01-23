@@ -2,9 +2,23 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class Main {
+    public static Logger log = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     public static void main(String[] args) {
+        log.setUseParentHandlers(false);
+        ConsoleHandler handler = new ConsoleHandler();
+
+        Formatter formatter = new LogFormatter();
+        handler.setFormatter(formatter);
+
+        log.addHandler(handler);
+
+        log.info("Starting up!");
 
         List<Team> teams = new ArrayList<>();
 
