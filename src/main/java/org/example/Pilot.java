@@ -3,8 +3,9 @@ package org.example;
 import static org.example.Race.BASE_LAP_TIME;
 
 public class Pilot {
+    private static final int MAX_FUEL = 25;
     String name;
-    int fuel = 15;
+    int fuel = MAX_FUEL;
     int laps = 69;
     int time = 0;
 
@@ -23,7 +24,7 @@ public class Pilot {
         Thread.sleep(BASE_LAP_TIME + random);
     }
     public synchronized void refuel() throws InterruptedException {
-        this.fuel = 15;
+        this.fuel = MAX_FUEL;
         Thread.sleep(BASE_LAP_TIME / 10);
     }
 }

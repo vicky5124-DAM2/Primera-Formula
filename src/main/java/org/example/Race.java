@@ -103,7 +103,7 @@ public class Race implements Runnable {
             thread.interrupt();
         }
 
-        System.out.println("FINISHED");
+        Main.log.info("FINISHED");
     }
 
     @Override
