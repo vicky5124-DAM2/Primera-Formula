@@ -7,13 +7,13 @@ import java.util.List;
 
 public class Race implements Runnable {
     boolean is_running = true;
-    List<Pilot> pilots;
+    List<Team> teams;
 
-    public Race(List<Pilot> pilots) {
-        this.pilots = pilots;
+    public Race(List<Team> teams) {
+        this.teams = teams;
     }
 
-    private void lap(Pilot pilot) {
+    private void lap(Team team, Pilot pilot) {
         pilot.laps -= 1;
 
         try {
@@ -25,7 +25,7 @@ public class Race implements Runnable {
             return;
         }
 
-        System.out.printf("Pilot: %s | Laps left: %d\n", pilot.name, pilot.laps);
+        System.out.printf("Team: %s | Pilot: %s | Laps left: %d\n", team.name, pilot.name, pilot.laps);
 
         if (pilot.laps == 0) {
             synchronized (this) {
@@ -37,39 +37,43 @@ public class Race implements Runnable {
     public void run() {
         List<Thread> threads = new ArrayList<>();
 
-        for (Pilot pilot : this.pilots) {
-            Runnable runnable = new Runnable() {
-                private Pilot pilot;
-                private Race race;
+        for (Team team: this.teams) {
+            for (Pilot pilot : team.pilots) {
+                Runnable runnable = new Runnable() {
+                    private Team team;
+                    private Pilot pilot;
+                    private Race race;
 
-                @Override
-                public void run() {
-                    while (this.race.is_running && this.pilot.laps > 0) {
-                        this.race.lap(this.pilot);
+                    @Override
+                    public void run() {
+                        while (this.race.is_running && this.pilot.laps > 0) {
+                            this.race.lap(this.team, this.pilot);
 
-                        if (Thread.currentThread().isInterrupted()) {
-                            synchronized (this.race) {
-                                this.race.notifyAll();
+                            if (Thread.currentThread().isInterrupted()) {
+                                synchronized (this.race) {
+                                    this.race.notifyAll();
+                                }
+
+                                return;
                             }
+                        }
 
-                            return;
+                        synchronized (this.race) {
+                            this.race.is_running = false;
+                            this.race.notifyAll();
                         }
                     }
 
-                    synchronized (this.race) {
-                        this.race.is_running = false;
-                        this.race.notifyAll();
+                    public Runnable init(Team team, Pilot pilot, Race race) {
+                        this.team = team;
+                        this.pilot = pilot;
+                        this.race = race;
+                        return this;
                     }
-                }
+                }.init(team, pilot, this);
 
-                public Runnable init(Pilot pilot, Race race) {
-                    this.pilot = pilot;
-                    this.race = race;
-                    return this;
-                }
-            }.init(pilot, this);
-
-            threads.add(new Thread(runnable));
+                threads.add(new Thread(runnable));
+            }
         }
 
         for (Thread thread : threads) {
@@ -100,9 +104,11 @@ public class Race implements Runnable {
         HashMap<Integer, Integer> time_lowest = new HashMap<>();
 
         for (int i = 0; i < 15; i++) {
-            for (Pilot pilot : this.pilots) {
-                if (pilot.laps == i) {
-                    finished_pilots_sorted_set.add(pilot);
+            for (Team team: this.teams) {
+                for (Pilot pilot : team.pilots) {
+                    if (pilot.laps == i) {
+                        finished_pilots_sorted_set.add(pilot);
+                    }
                 }
             }
 
